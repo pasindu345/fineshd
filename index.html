@@ -1,19 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Downloader</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>Social Media Video Downloader</title>
+  <meta name="description" content="Download videos from YouTube, Facebook, and TikTok easily with our free video downloader.">
+  <meta property="og:title" content="Social Media Video Downloader">
+  <meta property="og:description" content="Download videos from YouTube, Facebook, and TikTok easily with our free video downloader.">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <meta name="description" content="Free online tool to download videos from YouTube, Facebook, and TikTok in various quality options.">
 </head>
 <body>
-  <header class="header">
-    <div class="container">
+  <div class="container">
+    <!-- Header Section -->
+    <header class="header">
       <div class="logo">
-        <h1>Video Downloader</h1>
-        <p>Download videos from YouTube, Facebook & TikTok</p>
+        <i class="fas fa-download"></i>
+        <h1>Social Media Video Downloader</h1>
+        <p class="subtitle">Download videos from YouTube, Facebook, and TikTok with just a URL paste.</p>
       </div>
       <nav class="nav">
         <ul>
@@ -22,169 +28,125 @@
           <li><a href="#about">About</a></li>
         </ul>
       </nav>
-    </div>
-  </header>
+    </header>
 
-  <main>
-    <section class="hero">
-      <div class="container">
-        <h2>Download Videos in One Click</h2>
-        <p>Enter the URL of the video you want to download and choose your preferred format and quality.</p>
-        
-        <div class="platform-selector">
-          <button class="platform-btn active" data-platform="youtube">
-            <i class="fab fa-youtube"></i> YouTube
-          </button>
-          <button class="platform-btn" data-platform="facebook">
-            <i class="fab fa-facebook-f"></i> Facebook
-          </button>
-          <button class="platform-btn" data-platform="tiktok">
-            <i class="fab fa-tiktok"></i> TikTok
-          </button>
-        </div>
-        
-        <div class="url-input-container">
-          <div class="url-input-wrapper">
-            <input type="text" id="video-url" placeholder="Paste video URL here...">
-            <button id="fetch-btn">
-              <i class="fas fa-search"></i> Fetch Video
-            </button>
-          </div>
-          <p id="error-message" class="error-message"></p>
-        </div>
-      </div>
+    <!-- Platform Selector -->
+    <section class="platform-selector">
+      <button class="platform-btn active" data-platform="youtube"><i class="fab fa-youtube"></i> YouTube</button>
+      <button class="platform-btn" data-platform="facebook"><i class="fab fa-facebook-f"></i> Facebook</button>
+      <button class="platform-btn" data-platform="tiktok"><i class="fab fa-tiktok"></i> TikTok</button>
     </section>
 
-    <section id="video-preview" class="video-preview hidden">
-      <div class="container">
+    <!-- Main Content -->
+    <main>
+      <!-- URL Input Form -->
+      <div class="url-input-card">
+        <form id="urlForm">
+          <div class="input-wrapper">
+            <div class="input-icon"><i class="fas fa-link"></i></div>
+            <input type="text" id="urlInput" placeholder="Paste YouTube, Facebook or TikTok URL here..." required />
+            <div id="clearBtn" class="clear-button hidden"><i class="fas fa-times"></i></div>
+          </div>
+          <button type="submit" id="downloadBtn">
+            <span id="btnText">Download</span>
+            <i id="loadingIcon" class="fas fa-spinner fa-spin hidden"></i>
+          </button>
+        </form>
+      </div>
+
+      <!-- Error Display -->
+      <div id="errorContainer" class="error-container hidden">
+        <div class="error-content">
+          <i class="fas fa-exclamation-circle"></i>
+          <div class="error-message">
+            <h3>Error</h3>
+            <p id="errorMessage"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Templates (YouTube, Facebook, TikTok) -->
+      <div id="resultsContainer">
+        <!-- Loading & Individual platform result templates here (unchanged from your first file) -->
+        <!-- Keep your existing YouTube, Facebook, and TikTok result blocks here -->
+      </div>
+
+      <!-- Video Preview Section -->
+      <section id="video-preview" class="video-preview hidden">
         <div class="preview-content">
           <div class="preview-left">
             <div class="thumbnail-container">
               <img id="video-thumbnail" src="" alt="Video thumbnail">
               <div class="play-overlay">
-                <button id="play-btn">
-                  <i class="fas fa-play"></i>
-                </button>
+                <button id="play-btn"><i class="fas fa-play"></i></button>
               </div>
             </div>
             <div class="video-player-container hidden">
               <video id="video-player" controls>
-                <source src="" type="video/mp4">
+                <source src="" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </div>
           </div>
-          
           <div class="preview-right">
             <h2 id="video-title">Video Title</h2>
-            
             <div class="video-info">
-              <span class="duration">
-                <i class="far fa-clock"></i>
-                <span id="video-duration">00:00</span>
-              </span>
+              <span class="duration"><i class="far fa-clock"></i><span id="video-duration">00:00</span></span>
               <div id="video-stats" class="stats hidden"></div>
             </div>
-            
             <div class="format-selector">
               <h3>Format</h3>
               <div class="format-buttons">
-                <button class="format-btn active" data-format="video_with_audio">
-                  <i class="fas fa-file-video"></i> Video with Audio
-                </button>
-                <button class="format-btn" data-format="video_only" id="video-only-btn">
-                  <i class="fas fa-video"></i> Video Only
-                </button>
-                <button class="format-btn" data-format="audio" id="audio-only-btn">
-                  <i class="fas fa-music"></i> Audio Only
-                </button>
+                <button class="format-btn active" data-format="video_with_audio"><i class="fas fa-file-video"></i> Video with Audio</button>
+                <button class="format-btn" data-format="video_only"><i class="fas fa-video"></i> Video Only</button>
+                <button class="format-btn" data-format="audio"><i class="fas fa-music"></i> Audio Only</button>
               </div>
             </div>
-            
             <div class="quality-selector">
               <h3>Quality</h3>
               <select id="quality-select"></select>
             </div>
-            
             <div class="download-container">
               <button id="download-btn" class="download-btn">
                 <i class="fas fa-download"></i> Download Now
               </button>
-              
               <div id="download-progress" class="download-progress hidden">
                 <div class="progress-text">
-                  <span>Downloading...</span>
-                  <span id="progress-percentage">0%</span>
+                  <span>Downloading...</span><span id="progress-percentage">0%</span>
                 </div>
-                <div class="progress-bar-container">
-                  <div id="progress-bar" class="progress-bar"></div>
-                </div>
+                <div class="progress-bar-container"><div id="progress-bar" class="progress-bar"></div></div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section id="how-to" class="how-to-section">
-      <div class="container">
+      <!-- How to Use Section -->
+      <section id="how-to" class="how-to-section">
         <h2>How to Download Videos</h2>
-        
         <div class="steps">
           <div class="step">
-            <div class="step-icon">
-              <i class="fas fa-link"></i>
-            </div>
-            <h3>Step 1: Copy Video URL</h3>
-            <p>Find the video you want to download on YouTube, Facebook, or TikTok and copy its URL from the address bar.</p>
+            <h3>1. Copy the Video URL</h3>
+            <p>Copy the URL of the video you want to download from YouTube, Facebook, or TikTok.</p>
           </div>
-          
           <div class="step">
-            <div class="step-icon">
-              <i class="fas fa-paste"></i>
-            </div>
-            <h3>Step 2: Paste URL</h3>
-            <p>Paste the copied URL into the input field on our website and click the "Fetch Video" button.</p>
+            <h3>2. Paste and Fetch</h3>
+            <p>Paste the URL into the input field and click the "Download" button.</p>
           </div>
-          
           <div class="step">
-            <div class="step-icon">
-              <i class="fas fa-sliders-h"></i>
-            </div>
-            <h3>Step 3: Select Format & Quality</h3>
-            <p>Choose your preferred format (video with audio, video only, or audio only) and select the quality option.</p>
-          </div>
-          
-          <div class="step">
-            <div class="step-icon">
-              <i class="fas fa-download"></i>
-            </div>
-            <h3>Step 4: Download</h3>
-            <p>Click the "Download Now" button to start downloading your video in the selected format and quality.</p>
+            <h3>3. Choose Format & Quality</h3>
+            <p>Select your preferred video/audio format and quality, then download it.</p>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
 
-    <section id="about" class="about-section">
-      <div class="container">
-        <h2>About This Tool</h2>
-        <p>This video downloader tool allows you to easily download videos from popular social media platforms including YouTube, Facebook, and TikTok. It's designed to be fast, reliable, and user-friendly.</p>
-        <p>Please note that you should only download videos for personal use and respect the copyright of the content creators.</p>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div class="container">
-      <p>&copy; 2025 Video Downloader. All rights reserved.</p>
-      <div class="social-links">
-        <a href="#"><i class="fab fa-twitter"></i></a>
-        <a href="#"><i class="fab fa-facebook"></i></a>
-        <a href="#"><i class="fab fa-instagram"></i></a>
-      </div>
-    </div>
-  </footer>
+    <!-- Footer -->
+    <footer>
+      <p>Download your favorite social media videos easily and for free.</p>
+      <p>&copy; <span id="currentYear"></span> Social Media Video Downloader. All rights reserved.</p>
+    </footer>
+  </div>
 
   <script src="script.js"></script>
 </body>
