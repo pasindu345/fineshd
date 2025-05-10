@@ -1,7 +1,7 @@
 // Constants for API endpoints
 const YOUTUBE_API = 'https://yt-vid.hazex.workers.dev/?url=';
 const FACEBOOK_API = 'https://facebook-downloader.apis-bj-devs.workers.dev/?url=';
-const TIKTOK_API = 'https://tele-social.vercel.app/down?url=';
+const TIKTOK_API = 'https://tiktok-dl.akalankanime11.workers.dev/?url=';
 
 // DOM elements
 const urlForm = document.getElementById('urlForm');
