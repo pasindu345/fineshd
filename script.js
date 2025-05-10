@@ -195,8 +195,9 @@ async function handleFormSubmit(e) {
         response = await fetch(`${TIKTOK_API}${encodeURIComponent(url)}`);
         data = await response.json();
         
-        if (!data.status) {
-          throw new Error('Failed to fetch TikTok video data');
+        // Fixed TikTok error handling
+        if (!data || data.error) {
+          throw new Error(data?.message || 'Failed to fetch TikTok video data');
         }
         
         displayTikTokResult(data);
@@ -204,6 +205,7 @@ async function handleFormSubmit(e) {
     }
   } catch (error) {
     showError(error.message || 'An unexpected error occurred');
+    console.error('Download error:', error);
   } finally {
     setLoading(false);
   }
@@ -256,9 +258,59 @@ function displayFacebookResult(data) {
 }
 
 function displayTikTokResult(data) {
-  tiktokPreview.src = data.data.video;
-  tiktokVideoLink.href = data.data.video;
-  tiktokAudioLink.href = data.data.audio;
+  // Check if we have the necessary data and correctly structured response
+  if (!data.data) {
+    showError('Invalid TikTok response format');
+    return;
+  }
+  
+  // Handle different API response formats
+  const videoUrl = data.data.video || (data.data.nowm ? data.data.nowm : null);
+  const audioUrl = data.data.audio || (data.data.music ? data.data.music : null);
+  
+  if (!videoUrl) {
+    showError('No video URL found in TikTok response');
+    return;
+  }
+  
+  // Set video preview if it exists and is a valid URL
+  if (videoUrl) {
+    tiktokPreview.src = videoUrl;
+    tiktokPreview.onerror = () => {
+      tiktokPreview.style.display = 'none';
+      console.error('Failed to load TikTok preview');
+    };
+  } else {
+    tiktokPreview.style.display = 'none';
+  }
+  
+  // Set download links
+  tiktokVideoLink.href = videoUrl;
+  tiktokVideoLink.setAttribute('download', 'tiktok-video.mp4');
+  
+  if (audioUrl) {
+    tiktokAudioLink.href = audioUrl;
+    tiktokAudioLink.setAttribute('download', 'tiktok-audio.mp3');
+    tiktokAudioLink.style.display = 'inline-block';
+  } else {
+    tiktokAudioLink.style.display = 'none';
+  }
+  
+  // Add event listeners to ensure proper download behavior
+  tiktokVideoLink.addEventListener('click', (e) => {
+    // For some browsers that require user activation for download attribute
+    setTimeout(() => {
+      window.open(videoUrl, '_blank');
+    }, 100);
+  });
+  
+  if (audioUrl) {
+    tiktokAudioLink.addEventListener('click', (e) => {
+      setTimeout(() => {
+        window.open(audioUrl, '_blank');
+      }, 100);
+    });
+  }
   
   // Show the result
   tiktokResult.classList.remove('hidden');
