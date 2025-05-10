@@ -1,7 +1,8 @@
 // Constants for API endpoints
 const YOUTUBE_API = 'https://yt-vid.hazex.workers.dev/?url=';
 const FACEBOOK_API = 'https://facebook-downloader.apis-bj-devs.workers.dev/?url=';
-const TIKTOK_API = 'https://tiktok-dl.akalankanime11.workers.dev/?url=';
+const TIKTOK_API = 'https://tele-social.vercel.app/down?url=';
+const AD_REDIRECT_URL = 'https://adstera.com/redirect';
 
 // DOM elements
 const urlForm = document.getElementById('urlForm');
@@ -35,8 +36,32 @@ const tiktokPreview = document.getElementById('tiktokPreview');
 const tiktokVideoLink = document.getElementById('tiktokVideoLink');
 const tiktokAudioLink = document.getElementById('tiktokAudioLink');
 
+// Variable to store download URLs for use after ad redirect
+let pendingDownloads = {
+  url: null,
+  type: null
+};
+
 // Set current year in footer
 document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+// Check if returning from ad redirect
+window.addEventListener('load', () => {
+  const hasRedirected = sessionStorage.getItem('adRedirected');
+  if (hasRedirected) {
+    const savedUrl = sessionStorage.getItem('downloadUrl');
+    const savedType = sessionStorage.getItem('downloadType');
+    if (savedUrl) {
+      // Clear the session storage
+      sessionStorage.removeItem('adRedirected');
+      sessionStorage.removeItem('downloadUrl');
+      sessionStorage.removeItem('downloadType');
+      
+      // Trigger the actual download
+      triggerDownload(savedUrl, savedType);
+    }
+  }
+});
 
 // Add event listeners
 document.addEventListener('DOMContentLoaded', () => {
@@ -181,31 +206,48 @@ async function handleFormSubmit(e) {
         break;
         
       case 'facebook':
-        response = await fetch(`${FACEBOOK_API}${encodeURIComponent(url)}`);
-        data = await response.json();
-        
-        if (!data.status) {
-          throw new Error('Failed to fetch Facebook video data');
+        // Fix for Facebook API - add proper error handling and response parsing
+        try {
+          response = await fetch(`${FACEBOOK_API}${encodeURIComponent(url)}`);
+          data = await response.json();
+          
+          // Add more robust check for Facebook response
+          if (!data.status || !data.data || !data.data.url) {
+            throw new Error('Invalid Facebook video data received');
+          }
+          
+          displayFacebookResult(data);
+        } catch (fbError) {
+          console.error('Facebook download error:', fbError);
+          throw new Error('Failed to fetch Facebook video. Please check the URL and try again.');
         }
-        
-        displayFacebookResult(data);
         break;
         
       case 'tiktok':
-        response = await fetch(`${TIKTOK_API}${encodeURIComponent(url)}`);
-        data = await response.json();
-        
-        // Fixed TikTok error handling
-        if (!data || data.error) {
-          throw new Error(data?.message || 'Failed to fetch TikTok video data');
+        // Fix for TikTok API - improve error handling and response parsing
+        try {
+          response = await fetch(`${TIKTOK_API}${encodeURIComponent(url)}`);
+          data = await response.json();
+          
+          // Handle different TikTok API response formats
+          if (data.error || !data.status || !data.data) {
+            throw new Error(data.message || 'Invalid TikTok response');
+          }
+          
+          // Check if we have video URL in the response
+          if (!data.data.video && !data.data.nowm) {
+            throw new Error('No video URL found in TikTok response');
+          }
+          
+          displayTikTokResult(data);
+        } catch (tkError) {
+          console.error('TikTok download error:', tkError);
+          throw new Error('Failed to fetch TikTok video. Please check the URL and try again.');
         }
-        
-        displayTikTokResult(data);
         break;
     }
   } catch (error) {
     showError(error.message || 'An unexpected error occurred');
-    console.error('Download error:', error);
   } finally {
     setLoading(false);
   }
@@ -249,81 +291,141 @@ function displayYouTubeResult(data) {
 }
 
 function displayFacebookResult(data) {
+  // Make sure we have valid data
+  if (!data.data) {
+    showError('Invalid Facebook response data');
+    return;
+  }
+  
   facebookQuality.textContent = data.data.quality || 'HD';
-  facebookThumbnail.src = data.data.thumbnail;
-  facebookDownloadLink.href = data.data.url;
+  
+  // Add fallback for thumbnail
+  if (data.data.thumbnail) {
+    facebookThumbnail.src = data.data.thumbnail;
+    facebookThumbnail.onerror = () => {
+      facebookThumbnail.src = 'https://via.placeholder.com/320x180?text=Facebook+Video';
+    };
+  } else {
+    facebookThumbnail.src = 'https://via.placeholder.com/320x180?text=Facebook+Video';
+  }
+  
+  // Set up download with ad redirect
+  facebookDownloadLink.removeEventListener('click', facebookDownloadHandler);
+  facebookDownloadLink.addEventListener('click', facebookDownloadHandler);
+  
+  // Store the download URL for later use
+  facebookDownloadLink.dataset.downloadUrl = data.data.url;
   
   // Show the result
   facebookResult.classList.remove('hidden');
 }
 
+function facebookDownloadHandler(e) {
+  e.preventDefault();
+  const downloadUrl = e.currentTarget.dataset.downloadUrl;
+  redirectToAdThenDownload(downloadUrl, 'video/mp4');
+}
+
 function displayTikTokResult(data) {
-  // Check if we have the necessary data and correctly structured response
+  // Make sure we have valid data
   if (!data.data) {
-    showError('Invalid TikTok response format');
+    showError('Invalid TikTok response data');
     return;
   }
   
-  // Handle different API response formats
-  const videoUrl = data.data.video || (data.data.nowm ? data.data.nowm : null);
-  const audioUrl = data.data.audio || (data.data.music ? data.data.music : null);
+  // Handle different TikTok API response formats
+  const videoUrl = data.data.video || data.data.nowm || '';
+  const audioUrl = data.data.audio || data.data.music || '';
   
   if (!videoUrl) {
     showError('No video URL found in TikTok response');
     return;
   }
   
-  // Set video preview if it exists and is a valid URL
-  if (videoUrl) {
-    tiktokPreview.src = videoUrl;
-    tiktokPreview.onerror = () => {
-      tiktokPreview.style.display = 'none';
-      console.error('Failed to load TikTok preview');
-    };
-  } else {
+  // Set video preview
+  tiktokPreview.src = videoUrl;
+  tiktokPreview.onerror = () => {
     tiktokPreview.style.display = 'none';
-  }
+    const fallbackImg = document.createElement('img');
+    fallbackImg.src = 'https://via.placeholder.com/320x180?text=TikTok+Video';
+    fallbackImg.alt = 'TikTok Video Preview';
+    fallbackImg.style.width = '100%';
+    fallbackImg.style.borderRadius = '0.5rem';
+    tiktokPreview.parentNode.appendChild(fallbackImg);
+  };
   
-  // Set download links
-  tiktokVideoLink.href = videoUrl;
-  tiktokVideoLink.setAttribute('download', 'tiktok-video.mp4');
+  // Set up download with ad redirect for video
+  tiktokVideoLink.removeEventListener('click', tiktokVideoDownloadHandler);
+  tiktokVideoLink.addEventListener('click', tiktokVideoDownloadHandler);
+  tiktokVideoLink.dataset.downloadUrl = videoUrl;
   
+  // Set up download with ad redirect for audio if available
   if (audioUrl) {
-    tiktokAudioLink.href = audioUrl;
-    tiktokAudioLink.setAttribute('download', 'tiktok-audio.mp3');
-    tiktokAudioLink.style.display = 'inline-block';
+    tiktokAudioLink.style.display = 'flex';
+    tiktokAudioLink.removeEventListener('click', tiktokAudioDownloadHandler);
+    tiktokAudioLink.addEventListener('click', tiktokAudioDownloadHandler);
+    tiktokAudioLink.dataset.downloadUrl = audioUrl;
   } else {
     tiktokAudioLink.style.display = 'none';
-  }
-  
-  // Add event listeners to ensure proper download behavior
-  tiktokVideoLink.addEventListener('click', (e) => {
-    // For some browsers that require user activation for download attribute
-    setTimeout(() => {
-      window.open(videoUrl, '_blank');
-    }, 100);
-  });
-  
-  if (audioUrl) {
-    tiktokAudioLink.addEventListener('click', (e) => {
-      setTimeout(() => {
-        window.open(audioUrl, '_blank');
-      }, 100);
-    });
   }
   
   // Show the result
   tiktokResult.classList.remove('hidden');
 }
 
+function tiktokVideoDownloadHandler(e) {
+  e.preventDefault();
+  const downloadUrl = e.currentTarget.dataset.downloadUrl;
+  redirectToAdThenDownload(downloadUrl, 'video/mp4');
+}
+
+function tiktokAudioDownloadHandler(e) {
+  e.preventDefault();
+  const downloadUrl = e.currentTarget.dataset.downloadUrl;
+  redirectToAdThenDownload(downloadUrl, 'audio/mp3');
+}
+
+// Function to redirect to ad and then download
+function redirectToAdThenDownload(url, type) {
+  if (!url) return;
+  
+  // Store download info in session storage
+  sessionStorage.setItem('downloadUrl', url);
+  sessionStorage.setItem('downloadType', type);
+  sessionStorage.setItem('adRedirected', 'true');
+  
+  // Redirect to ad page
+  window.location.href = AD_REDIRECT_URL;
+}
+
+// Function to trigger actual download
+function triggerDownload(url, type) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = generateFileName(type);
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// Generate filename based on content type
+function generateFileName(type) {
+  const timestamp = new Date().getTime();
+  if (type.includes('audio')) {
+    return `audio_${timestamp}.mp3`;
+  } else {
+    return `video_${timestamp}.mp4`;
+  }
+}
+
 function createDownloadButton(option, type) {
   const div = document.createElement('div');
   
   const link = document.createElement('a');
-  link.href = option.url;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  link.download = '';
+  link.href = 'javascript:void(0)';  // Changed to use our custom handler
+  link.dataset.downloadUrl = option.url;
+  link.dataset.downloadType = type === 'audio' ? 'audio/mp3' : 'video/mp4';
   
   // Set appropriate class and icon based on type
   let className = '';
@@ -351,6 +453,12 @@ function createDownloadButton(option, type) {
   link.appendChild(icon);
   link.appendChild(span);
   div.appendChild(link);
+  
+  // Add click handler for ad redirect
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    redirectToAdThenDownload(this.dataset.downloadUrl, this.dataset.downloadType);
+  });
   
   return div;
 }
