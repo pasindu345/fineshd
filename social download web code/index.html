@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>Social Media Video Downloader</title>
+  <meta name="description" content="Download videos from YouTube, Facebook, and TikTok easily with our free video downloader. Choose from multiple quality options.">
+  <meta property="og:title" content="Social Media Video Downloader">
+  <meta property="og:description" content="Download videos from YouTube, Facebook, and TikTok easily with our free video downloader.">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header Section -->
+    <header>
+      <div class="logo">
+        <i class="fas fa-download"></i>
+        <h1>Social Media Video Downloader</h1>
+      </div>
+      <p class="subtitle">Download videos from YouTube, Facebook, and TikTok with just a URL paste.</p>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+      <!-- URL Input Form -->
+      <div class="url-input-card">
+        <form id="urlForm">
+          <div class="input-wrapper">
+            <div class="input-icon">
+              <i class="fas fa-link"></i>
+            </div>
+            <input 
+              type="text" 
+              id="urlInput" 
+              placeholder="Paste YouTube, Facebook or TikTok URL here..." 
+              required
+            >
+            <div id="clearBtn" class="clear-button hidden">
+              <i class="fas fa-times"></i>
+            </div>
+          </div>
+          <button type="submit" id="downloadBtn">
+            <span id="btnText">Download</span>
+            <i id="loadingIcon" class="fas fa-spinner fa-spin hidden"></i>
+          </button>
+        </form>
+        
+        <div class="platform-tags">
+          <div class="platform-tag">
+            <i class="fab fa-youtube"></i>
+            <span>YouTube</span>
+          </div>
+          <div class="platform-tag">
+            <i class="fab fa-facebook"></i>
+            <span>Facebook</span>
+          </div>
+          <div class="platform-tag">
+            <i class="fab fa-tiktok"></i>
+            <span>TikTok</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Error Display -->
+      <div id="errorContainer" class="error-container hidden">
+        <div class="error-content">
+          <i class="fas fa-exclamation-circle"></i>
+          <div class="error-message">
+            <h3>Error</h3>
+            <p id="errorMessage"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Container -->
+      <div id="resultsContainer">
+        <!-- Loading Placeholder -->
+        <div id="loadingPlaceholder" class="result-card hidden">
+          <div class="shimmer header-shimmer"></div>
+          <div class="result-content">
+            <div class="shimmer thumbnail-shimmer"></div>
+            <div class="result-details">
+              <div class="shimmer title-shimmer"></div>
+              <div class="shimmer text-shimmer"></div>
+              <div class="shimmer-grid">
+                <div class="shimmer button-shimmer"></div>
+                <div class="shimmer button-shimmer"></div>
+                <div class="shimmer button-shimmer"></div>
+                <div class="shimmer button-shimmer"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- YouTube Result Template -->
+        <div id="youtubeResult" class="result-card hidden">
+          <div class="result-header">
+            <div class="platform-icon">
+              <i class="fab fa-youtube"></i>
+              <span>YouTube Video</span>
+            </div>
+            <span id="youtubeDuration" class="duration-badge"></span>
+          </div>
+          <div class="result-content">
+            <div class="thumbnail-container">
+              <img id="youtubeThumbnail" src="" alt="Video thumbnail">
+            </div>
+            <div class="result-details">
+              <h3 id="youtubeTitle"></h3>
+              
+              <div class="options-section">
+                <div class="options-header">
+                  <i class="fas fa-sliders-h"></i>
+                  <h4>Download Options</h4>
+                </div>
+                
+                <div class="format-tabs">
+                  <button class="tab-button active" data-tab="video-tab">
+                    <i class="fas fa-video"></i> Video
+                  </button>
+                  <button class="tab-button" data-tab="audio-tab">
+                    <i class="fas fa-music"></i> Audio Only
+                  </button>
+                </div>
+                
+                <div id="video-tab" class="format-content active">
+                  <div id="videoOptions" class="download-options-grid"></div>
+                </div>
+                
+                <div id="audio-tab" class="format-content">
+                  <div id="audioOptions" class="download-options-grid"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Facebook Result Template -->
+        <div id="facebookResult" class="result-card hidden">
+          <div class="result-header">
+            <div class="platform-icon">
+              <i class="fab fa-facebook"></i>
+              <span>Facebook Video</span>
+            </div>
+            <span id="facebookQuality" class="quality-badge"></span>
+          </div>
+          <div class="result-content">
+            <div class="thumbnail-container">
+              <img id="facebookThumbnail" src="" alt="Facebook video thumbnail">
+            </div>
+            <div class="result-details">
+              <div class="info-message">
+                <i class="fas fa-info-circle"></i>
+                <p>This Facebook video is available for download.</p>
+              </div>
+              
+              <a id="facebookDownloadLink" href="#" target="_blank" class="download-button facebook">
+                <i class="fas fa-download"></i> Download Video
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- TikTok Result Template -->
+        <div id="tiktokResult" class="result-card hidden">
+          <div class="result-header">
+            <div class="platform-icon">
+              <i class="fab fa-tiktok"></i>
+              <span>TikTok Video</span>
+            </div>
+          </div>
+          <div class="result-content">
+            <div class="thumbnail-container">
+              <video id="tiktokPreview" controls>
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            <div class="result-details">
+              <div class="info-message">
+                <i class="fas fa-info-circle"></i>
+                <p>Choose your download option:</p>
+              </div>
+              
+              <div class="download-options-grid">
+                <a id="tiktokVideoLink" href="#" target="_blank" class="download-button tiktok">
+                  <i class="fas fa-video"></i> Download Video
+                </a>
+                <a id="tiktokAudioLink" href="#" target="_blank" class="download-button tiktok-audio">
+                  <i class="fas fa-music"></i> Download Audio
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer>
+      <p>Download your favorite social media videos easily and for free.</p>
+      <p>&copy; <span id="currentYear"></span> Social Media Video Downloader. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
