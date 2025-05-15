@@ -2,7 +2,7 @@
 const YOUTUBE_API = 'https://yt-vid.hazex.workers.dev/?url=';
 const FACEBOOK_API = 'https://facebook-downloader.apis-bj-devs.workers.dev/?url=';
 const TIKTOK_API = 'https://tele-social.vercel.app/down?url=';
-const AD_REDIRECT_URL = 'https://adstera.com/redirect';
+const AD_REDIRECT_URL = 'https://embraceattaindatabase.com/iknn4sss0u?key=3946e399666a2681b895eaeec0ea9736';
 
 // DOM elements
 const urlForm = document.getElementById('urlForm');
